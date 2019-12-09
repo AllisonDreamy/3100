@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+
+
+<meta charset="utf-8">
+
+
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/d3-scale-radial.js"></script>
+
+<style>
+  a,a:visited{color:#3366cc;text-decoration:none;} 
+a:hover{color:#f60;text-decoration:underline;} 
+.tip{width:200px;border:2px solid #ddd;padding:8px;background:#f1f1f1;color:#666;} 
+    body {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        margin: auto;
+        padding-top: 50px;
+        position: relative;
+        width: 1000px;
+      }
+h1
+{
+  color:Grey;
+  position:absolute;
+  left:500px;
+  top:560px;
+}
+
+h2
+{
+  font-family:sans-serif
+  color:Grey;
+  position:absolute;
+  left:500px;
+  top:160px;
+  font-size:30px;
+}
+
+p6
+ {
+ position:absolute;
+  left:0px;
+  top:710px;
+  color: grey;
+  font-family: sans-serif;
+  font-size: 10px;}
+
+
+
+     #tooltip {
+        position:absolute;
+        width: 200px;
+        height: auto;
+        padding: 10px;
+        background-color: white;
+        -webkit-border-radius: 10px;
+        -moz-border-radius: 10px;
+        border-radius: 10px;
+        -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        pointer-events: none;
+    }
+
+    #tooltip.hidden {
+        display: none;
+    }
+
+    #tooltip p {
+        margin: 0;
+        font-family: sans-serif;
+        font-size: 16px;
+        line-height: 20px;
+    }
+    #sort {
+      width: 100px;
+      text-align: center;
+      background-color: #ddd;
+      cursor: pointer;
+      padding: 3px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .instructions em {
+      color: orange;
+      font-weight: bold;
+    }
+
+    #chart {
+      position: relative;
+    }
+      code {
+        font-family: monospace;
+        font-size: 17px;
+        color: #008;
+      }
+    
+
+.button {
+    background-color: #ea5151; 
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 7px;
+}
+.stop_button {
+    background-color: #afaa97; 
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 7px;
+}
+  .button:hover {
+    background-color: #b3b3b3;
+}
+.reset_button:hover {
+    background-color: #b3b3b3;
+}
+.reset_button {
+    background-color: #ea5151; 
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 7px;
+    position:absolute;
+  left:00px;
+  top:100px;
+}
+.stop_button {
+    background-color: #afaa97; 
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 7px;
+}
+  .reset_button:hover {
+    background-color: #b3b3b3;
+}
+
+
+
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+
+
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+
+    </style>
+
+<input type="button" class="button" value="▷Ⅱ">
+<input type="button" class="reset_button" value="&nbsp&nbsp↻&nbsp&nbsp">
+
+<div id="my_dataviz"></div>
+
+<script>
+  var tip={$:function(ele){ 
+  if(typeof(ele)=="object") 
+    return ele; 
+  else if(typeof(ele)=="string"||typeof(ele)=="number") 
+    return document.getElementById(ele.toString()); 
+    return null; 
+  }, 
+  mousePos:function(e){ 
+    var x,y; 
+    var e = e||window.event; 
+    return{x:e.clientX+document.body.scrollLeft+document.documentElement.scrollLeft, 
+y:e.clientY+document.body.scrollTop+document.documentElement.scrollTop}; 
+  }, 
+  start:function(obj){ 
+    var self = this; 
+    var t = self.$("mjs:tip"); 
+    obj.onmousemove=function(e){ 
+      var mouse = self.mousePos(e);   
+      t.style.left = mouse.x + 10 + 'px'; 
+      t.style.top = mouse.y + 10 + 'px'; 
+      t.innerHTML = obj.getAttribute("tips"); 
+      t.style.display = ''; 
+    }; 
+    obj.onmouseout=function(){ 
+      t.style.display = 'none'; 
+    }; 
+  } 
+  } 
+ 
+  var margin = {top: 100, right: 0, bottom: 0, left: 0},
+      width = 560 - margin.left - margin.right,
+      height = 560 - margin.top - margin.bottom,
+      innerRadius = 80,
+      outerRadius = Math.min(width, height) / 2;  
+      outerRadius = 100;
+  var svg = d3.select("#my_dataviz")
+    .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform", "translate(" + (width / 2 + margin.left) + "," + (height / 2 + margin.top) + ")");
+  
+
+  var y = d3.scaleRadial()
+            .range([innerRadius, outerRadius])   
+            .domain([-1.35, 1]); 
+  var ybis = d3.scaleRadial()
+              .range([innerRadius, 5])  
+              .domain([0, 222000]);
+  var current_year=1;
+
+  d3.csv("Inflation.csv", function(data) {
+    var x = d3.scaleBand()
+            .range([0, 2 * Math.PI])    
+            .align(0)                  
+            .domain(data.map(function(d) { return d.Country; }));
+
+    
+    var y_value=data.map(function(d) {console.log(d); return d['Value_'+current_year.toString()]; });
+    var i=0;
+    data=data.map(function(d){d.Value=y_value[i];i++;return d;})
+    d3.select("#current_year_box")
+        .text(current_year+2006);
+    
+
+   var tooltip = d3.select("#my_dataviz")
+  .append("div")
+    .style("position", "absolute")
+    .style("visibility", "hidden")
+    .text("I'm a circle!");
+
+
+    svg.append("g")
+      .attr("id","scale_graph")
+      .selectAll("path")
+      .data(data)
+      .enter()
+      .append("path")      
+        .attr("fill", "#ea5151")
+       
+        .attr("class", "yo")
+        .attr("onmouseover","tip.start(this)")
+        .attr("tips",function(d){return d.Value})
+        .attr("d", d3.arc()    
+            .innerRadius(innerRadius)
+           
+            .outerRadius(function(d) {return y(d.Value); })
+            .startAngle(function(d) { return x(d.Country); })
+            .endAngle(function(d) { return x(d.Country) + x.bandwidth(); })
+            .padAngle(0.01)
+            .padRadius(innerRadius))
+
+    svg.append("g")
+        .selectAll("g")
+        .data(data)
+        .enter()
+        .append("g")
+          .attr("id",'labels')
+          .attr("text-anchor", function(d) { return (x(d.Country) + x.bandwidth() / 2 + Math.PI) % (2 * Math.PI) < Math.PI ? "end" : "start"; })
+          .attr("transform", function(d) { return "rotate(" + ((x(d.Country) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")"+"translate(" + (y(d['Value'])+10) + ",0)"; })
+        .append("text")
+          .text(function(d){return(d.Country)})
+          .attr("transform", function(d) { return (x(d.Country) + x.bandwidth() / 2 + Math.PI) % (2 * Math.PI) < Math.PI ? "rotate(180)" : "rotate(0)"; })
+          .style("font-size", "11px")
+          .attr("alignment-baseline", "middle")
+
+ 
+
+svg.selectAll(".redbar")
+  
+  .on("mouseover",function(d){
+    console.log(d.Value,d.Value2)
+    
+    d3.select(this)
+    .transition()
+    .duration(300)
+    .attr("fill","rgb(255,200,00)")
+
+        
+
+
+      d3.select("#tooltip")
+
+        .select("#value")
+         .text(d.value)
+
+
+    d3.select("#tooltip")
+      .classed("hidden",false)
+
+  })
+ 
+  .on("mouseout",function(d){
+    d3.select(this)
+      .transition()
+      .duration(500)
+      .attr("fill", "#afaa97"
+                )})
+
+
+
+
+svg.selectAll(".yo")
+  
+  .on("mouseover",function(d){
+    console.log(d.Value,d.Value2)
+    
+    d3.select(this)
+    .transition()
+    .duration(200)
+    .attr("fill","rgb(255,200,00)")
+    
+    
+
+  })
+ 
+  .on("mouseout",function(d){
+    d3.select(this)
+      .transition()
+      .duration(800)
+      .attr("fill", "#ea5151"
+                )})
+  });
+
+
+  d3.csv("gdp1.csv", function(data) {
+   
+    var y_value=data.map(function(d) {console.log(d); return d['Value_'+current_year.toString()]; });
+    var i=0;
+    data=data.map(function(d){d.Value=y_value[i];i++;return d;})
+    
+
+   
+    var x = d3.scaleBand()
+        .range([0, 2 * Math.PI])    
+        .align(0)                 
+        .domain(data.map(function(d) { return d.Country; })); 
+
+   var tooltip = d3.select("#my_dataviz")
+  .append("div")
+    .style("position", "absolute")
+    .style("visibility", "hidden")
+    .text("I'm a circle!");
+    
+    svg.append("g")
+      .attr("id",'static')
+      .selectAll("path")
+      .data(data)
+      .enter()
+      .append("path")
+        .attr("class","redbar")
+        .attr("fill", "#afaa97")
+        .attr("onmouseover","tip.start(this)")
+        .attr("tips",function(d){return d.Value})
+        .attr("d", d3.arc()    
+            .innerRadius( function(d) { return ybis(0) })
+            .outerRadius( function(d) { return ybis(d['Value']); })
+            .startAngle(function(d) { return x(d.Country); })
+            .endAngle(function(d) { return x(d.Country) + x.bandwidth(); })
+            .padAngle(0.01)
+            .padRadius(innerRadius))
+
+svg.selectAll(".redbar")
+  
+  .on("mouseover",function(d){
+    console.log(d.Value,d.Value2)
+    
+    d3.select(this)
+    .transition()
+    .duration(300)
+    .attr("fill","rgb(255,200,00)")
+
+        
+
+
+      d3.select("#tooltip")
+
+        .select("#value")
+         .text(d.value)
+
+
+    d3.select("#tooltip")
+      .classed("hidden",false)
+
+  })
+ 
+  .on("mouseout",function(d){
+    d3.select(this)
+      .transition()
+      .duration(500)
+      .attr("fill", "#afaa97"
+                )})
+
+.call(d3.zoom().on("zoom", function () {
+       svg.attr("transform", d3.event.transform)
+    }))
+
+
+
+svg.selectAll(".yo")
+  
+  .on("mouseover",function(d){
+    console.log(d.Value,d.Value2)
+    
+    d3.select(this)
+    .transition()
+    .duration(200)
+    .attr("fill","rgb(255,200,00)")
+
+  
+
+  })
+ 
+  .on("mouseout",function(d){
+    d3.select(this)
+      .transition()
+      .duration(800)
+      .attr("fill", "#ea5151"
+                )})
+  });
+
+
+var click_flag=0;
+var inside_data;
+var outside_data;
+d3.csv("Inflation.csv", function(data) {outside_data=data;console.log(outside_data);});
+
+d3.csv("gdp1.csv", function(data) {inside_data=data;console.log(inside_data);});
+
+d3.select(".button").on('click',function(){
+
+  var x = d3.scaleBand()
+            .range([0, 2 * Math.PI])    
+            .align(0)                  
+            .domain(outside_data.map(function(d) { return d.Country; }));
+  function change_year(aim_year){
+    this_function=this;
+      d3.select('#my_dataviz')
+        .select('#scale_graph')
+        .selectAll('path')
+        .data(outside_data)
+        .transition()
+        .duration(500)
+          .attr("tips",function(d){return d['Value_'+aim_year]})
+          .attr("d", d3.arc()    
+              .innerRadius(innerRadius)
+              .outerRadius(function(d) {return y(d['Value_'+aim_year]); })
+              .startAngle(function(d) { return x(d.Country); })
+              .endAngle(function(d) { return x(d.Country) + x.bandwidth(); })
+              .padAngle(0.01)
+              .padRadius(innerRadius))
+
+      d3.select('#my_dataviz')
+        .selectAll('#labels')
+        .data(outside_data)
+        .transition()
+        .duration(500)
+          .attr("text-anchor", function(d) { return (x(d.Country) + x.bandwidth() / 2 + Math.PI) % (2 * Math.PI) < Math.PI ? "end" : "start"; })
+          .attr("transform", function(d) { return "rotate(" + ((x(d.Country) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")"+"translate(" + (y(d['Value_'+aim_year])+10) + ",0)"; })
+       
+      d3.select('#my_dataviz')
+        .select('#static')
+        .selectAll('path')
+        .data(inside_data)
+        .transition()
+        .duration(500)
+          .attr("tips",function(d){return d['Value_'+aim_year]})
+          .attr("d", d3.arc()    
+              .innerRadius( function(d) { return ybis(0) })
+              .outerRadius(function(d) {return ybis(d['Value_'+aim_year]); })
+              .startAngle(function(d) { return x(d.Country); })
+              .endAngle(function(d) { return x(d.Country) + x.bandwidth(); })
+              .padAngle(0.01)
+              .padRadius(innerRadius))
+      d3.select('#current_year_box')
+        .text(aim_year+2006)
+  };
+  if (click_flag==0){
+    click_flag=1;
+    console.log('hi');
+    year_switch=setInterval(function(){
+      console.log('start_interval')
+      if (current_year<11){
+        console.log('current_year<11,change_year function used')
+        change_year(Number(current_year)+1);
+        current_year=Number(current_year)+1;
+        console.log(current_year)
+      }else{
+        clearInterval(year_switch)
+      }
+    },1000);
+  }else{
+    click_flag=0;
+    console.log('flag=1,interval will be cleared')
+    clearInterval(year_switch);
+  }
+  
+});
+
+d3.select('.reset_button').on('click',function(){
+  current_year=1
+  var x = d3.scaleBand()
+            .range([0, 2 * Math.PI])   
+            .align(0)                  
+            .domain(inside_data.map(function(d) { return d.Country; }));
+  console.log('reset')
+  d3.select('#my_dataviz')
+    .select('#scale_graph')
+    .selectAll('path')
+    .data(outside_data)
+    .transition()
+    .duration(200)
+      .attr("tips",function(d){return d['Value_1']})
+      .attr("d", d3.arc()     
+          .innerRadius(innerRadius)
+          .outerRadius(function(d) {return y(d['Value_1']); })
+          .startAngle(function(d) { return x(d.Country); })
+          .endAngle(function(d) { return x(d.Country) + x.bandwidth(); })
+          .padAngle(0.01)
+          .padRadius(innerRadius))
+
+
+  d3.select('#my_dataviz')
+    .select('#static')
+    .selectAll('path')
+    .data(inside_data)
+    .transition()
+    .duration(200)
+      .attr("tips",function(d){return d['Value_'+1]})
+      .attr("d", d3.arc()     
+          .innerRadius( function(d) { return ybis(0)})
+          .outerRadius(function(d) {return ybis(d['Value_'+1]); })
+          .startAngle(function(d) { return x(d.Country); })
+          .endAngle(function(d) { return x(d.Country) + x.bandwidth(); })
+          .padAngle(0.01)
+          .padRadius(innerRadius))
+  d3.select('#current_year_box')
+    .text(1+2006)
+})
+
+  </script>
+</head>
+<body>
+
+  <h1 id='current_year_box'>curent year!</h1>
+
+<div id="mjs:tip" class="tip" style="
+position:absolute;
+left:0;
+top:0;
+display:none;"></div>
+
+
+<p7 style="
+
+font-family:sans-serif;
+color:#b3b3b3;
+  position:absolute;
+  left:190px;
+  top:160px;
+  font-size:10px;
+
+">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspThe Interaction: <br>
+<color: #afaa97
+>GDP per capita 
+<color: grey
+>verses 
+<color: #ea5151;
+>inflation</p7>
+
+
+
+
+
+
+
+
+<p1 style= "
+ position:absolute;
+  left:290px;
+  top:395px;
+  color: grey;
+
+
+">--------------------------</p1>
+<p2 style="
+
+  position:absolute;
+  left:280px;
+  top:410px;
+  color: grey;
+  font-size: 10px;
+
+
+
+">20000
+&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+0
+&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+15%</p2>
+
+<p3 style= "
+ position:absolute;
+  left:52px;
+  top:610px;
+  color: #ea5151;
+  font-family: sans-serif;
+  font-size: 10px;
+
+
+">Inflation rate</p3>
+
+
+<p4 style= "
+ position:absolute;
+  left:52px;
+  top:650px;
+  color: #afaa97;
+  font-family: sans-serif;
+  font-size: 10px;
+
+
+">GDP per capita</p4>
+
+
+<p5 style= "
+ position:absolute;
+  left:470px;
+  top:630px;
+  color: #b3b3b3;
+  font-family: sans-serif;
+  font-size: 10px;
+
+
+">Source: World Bank(2019)</p5>
+
+
+
+<p6>
+The bar chart shows the relationship between GDP per capita and inflation in 21 Asia-Pacific countries.Thro<br>-ugh data calculations, the higher the degree of inflation, the lower the GDP per person is. It illustrates that <br>curbing inflation will make the economy between countries more equal and help to reduce the whole inequ<br>-ality between countries.<br>
+
+</p6>
+
+
+<div style="width:42px;height:28px;background-color:#ea5151; position:absolute;
+  left:0px;
+  top:600px;"></div>
+
+  <div style="width:42px;height:28px;background-color:#afaa97; position:absolute;
+  left:0px;
+  top:640px;"></div>
+
+
+
+
+
+
+
+
+
+</body>
+</html>
